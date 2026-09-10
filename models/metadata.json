@@ -1,0 +1,273 @@
+{
+  "model_version": "20260910.213610-440596bb",
+  "model_type": "tfidf+logreg",
+  "classes": [
+    "atencao",
+    "normal",
+    "urgente"
+  ],
+  "trained_at": "2026-09-10T21:36:10+00:00",
+  "dataset_rows": 6000,
+  "dataset_sha256": "440596bb4bf4dc3e7b928e9524aa367100c753623bbe681b66958341c9593964",
+  "hyperparameters": {
+    "tfidf": {
+      "ngram_range": [
+        1,
+        2
+      ],
+      "min_df": 2,
+      "sublinear_tf": true,
+      "lowercase": false,
+      "strip_accents": null,
+      "token_pattern": "[a-z0-9][a-z0-9]+"
+    },
+    "classifier": {
+      "C": 5.0,
+      "class_weight": "balanced",
+      "dual": false,
+      "fit_intercept": true,
+      "intercept_scaling": 1,
+      "max_iter": 2000,
+      "multi_class": "deprecated",
+      "penalty": "l2",
+      "random_state": 42,
+      "solver": "lbfgs",
+      "tol": 0.0001,
+      "verbose": 0,
+      "warm_start": false
+    },
+    "vocabulary_size": 4955
+  },
+  "metrics": {
+    "validation": {
+      "logreg": {
+        "accuracy": 0.9655937846836848,
+        "f1_macro": 0.9609478217687205,
+        "f1_weighted": 0.9655454105741152,
+        "urgent_recall": 0.949438202247191,
+        "per_class": {
+          "normal": {
+            "precision": 0.9649122807017544,
+            "recall": 0.9865470852017937,
+            "f1": 0.975609756097561,
+            "support": 446
+          },
+          "atencao": {
+            "precision": 0.9849056603773585,
+            "recall": 0.9422382671480144,
+            "f1": 0.9630996309963099,
+            "support": 277
+          },
+          "urgente": {
+            "precision": 0.9388888888888889,
+            "recall": 0.949438202247191,
+            "f1": 0.9441340782122905,
+            "support": 178
+          }
+        },
+        "confusion_matrix": [
+          [
+            440,
+            1,
+            5
+          ],
+          [
+            10,
+            261,
+            6
+          ],
+          [
+            6,
+            3,
+            169
+          ]
+        ],
+        "labels": [
+          "normal",
+          "atencao",
+          "urgente"
+        ],
+        "fit_seconds": 0.5879927999994834
+      },
+      "complement_nb": {
+        "accuracy": 0.9611542730299667,
+        "f1_macro": 0.9585672142196451,
+        "f1_weighted": 0.9610344079543779,
+        "urgent_recall": 0.9550561797752809,
+        "per_class": {
+          "normal": {
+            "precision": 0.9503239740820735,
+            "recall": 0.9865470852017937,
+            "f1": 0.9680968096809681,
+            "support": 446
+          },
+          "atencao": {
+            "precision": 0.9884169884169884,
+            "recall": 0.924187725631769,
+            "f1": 0.9552238805970149,
+            "support": 277
+          },
+          "urgente": {
+            "precision": 0.9497206703910615,
+            "recall": 0.9550561797752809,
+            "f1": 0.9523809523809523,
+            "support": 178
+          }
+        },
+        "confusion_matrix": [
+          [
+            440,
+            1,
+            5
+          ],
+          [
+            17,
+            256,
+            4
+          ],
+          [
+            6,
+            2,
+            170
+          ]
+        ],
+        "labels": [
+          "normal",
+          "atencao",
+          "urgente"
+        ],
+        "fit_seconds": 0.45121320000180276
+      },
+      "random_forest": {
+        "accuracy": 0.9411764705882353,
+        "f1_macro": 0.9365224235927004,
+        "f1_weighted": 0.9407789359781316,
+        "urgent_recall": 0.898876404494382,
+        "per_class": {
+          "normal": {
+            "precision": 0.9205020920502092,
+            "recall": 0.9865470852017937,
+            "f1": 0.9523809523809523,
+            "support": 446
+          },
+          "atencao": {
+            "precision": 0.9725490196078431,
+            "recall": 0.8953068592057761,
+            "f1": 0.9323308270676691,
+            "support": 277
+          },
+          "urgente": {
+            "precision": 0.9523809523809523,
+            "recall": 0.898876404494382,
+            "f1": 0.9248554913294798,
+            "support": 178
+          }
+        },
+        "confusion_matrix": [
+          [
+            440,
+            2,
+            4
+          ],
+          [
+            25,
+            248,
+            4
+          ],
+          [
+            13,
+            5,
+            160
+          ]
+        ],
+        "labels": [
+          "normal",
+          "atencao",
+          "urgente"
+        ],
+        "fit_seconds": 2.0067368000018178
+      }
+    },
+    "test": {
+      "accuracy": 0.9666666666666667,
+      "f1_macro": 0.9635973020728011,
+      "f1_weighted": 0.9666018507942283,
+      "urgent_recall": 0.9438202247191011,
+      "per_class": {
+        "normal": {
+          "precision": 0.9668141592920354,
+          "recall": 0.9820224719101124,
+          "f1": 0.9743589743589743,
+          "support": 445
+        },
+        "atencao": {
+          "precision": 0.9671532846715328,
+          "recall": 0.9566787003610109,
+          "f1": 0.9618874773139746,
+          "support": 277
+        },
+        "urgente": {
+          "precision": 0.9655172413793104,
+          "recall": 0.9438202247191011,
+          "f1": 0.9545454545454546,
+          "support": 178
+        }
+      },
+      "confusion_matrix": [
+        [
+          437,
+          4,
+          4
+        ],
+        [
+          10,
+          265,
+          2
+        ],
+        [
+          5,
+          5,
+          168
+        ]
+      ],
+      "labels": [
+        "normal",
+        "atencao",
+        "urgente"
+      ]
+    },
+    "dataset": {
+      "n_rows": 6000,
+      "n_duplicates": 2,
+      "class_distribution": {
+        "normal": 2969,
+        "atencao": 1847,
+        "urgente": 1184
+      },
+      "text_length_mean": 231.81683333333334,
+      "text_length_min": 61,
+      "text_length_max": 517,
+      "warnings": []
+    },
+    "onnx_parity": {
+      "n_samples": 1000,
+      "label_agreement": 1.0,
+      "max_abs_prob_diff": 0.009461064319458035,
+      "mean_abs_prob_diff": 0.0003958885383088048
+    }
+  },
+  "artifacts": {
+    "sklearn": {
+      "filename": "model.joblib",
+      "sha256": "92543eee5095667f39786f329a62827f17cef73affefcd0813cd93c00d218e23",
+      "size_bytes": 149046
+    },
+    "onnx": {
+      "filename": "model.onnx",
+      "sha256": "de5a17420543071d3b1f562a6ced3d4b52678bd3a3b8a72d06e629f3fbe19d3d",
+      "size_bytes": 230258
+    }
+  },
+  "seed": 42,
+  "package_version": "1.0.0"
+}

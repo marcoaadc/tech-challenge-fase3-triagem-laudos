@@ -1,0 +1,7 @@
+{
+  "model_version": "20260910.213610-440596bb",
+  "n_samples": 1000,
+  "label_agreement": 1.0,
+  "max_abs_prob_diff": 0.009461064319458035,
+  "mean_abs_prob_diff": 0.0003958885383088048
+}

@@ -1,0 +1,13 @@
+{
+  "current": "20260910.213610-440596bb",
+  "history": [
+    {
+      "model_version": "20260910.213610-440596bb",
+      "model_type": "tfidf+logreg",
+      "promoted_at": "2026-09-10T21:36:24+00:00",
+      "f1_macro_test": 0.9635973020728011,
+      "urgent_recall_test": 0.9438202247191011,
+      "onnx_sha256": "de5a17420543071d3b1f562a6ced3d4b52678bd3a3b8a72d06e629f3fbe19d3d"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "n_rows": 6000,
+  "n_duplicates": 2,
+  "class_distribution": {
+    "normal": 2969,
+    "atencao": 1847,
+    "urgente": 1184
+  },
+  "text_length_mean": 231.81683333333334,
+  "text_length_min": 61,
+  "text_length_max": 517,
+  "warnings": []
+}

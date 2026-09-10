@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+coverage.xml
+.ipynb_checkpoints/
+
+# Ambiente
+.env
+
+# MLflow (tracking local)
+mlruns/
+mlartifacts/
+
+# Artefatos intermediarios do pipeline
+models/candidate/
+ci-run/
+data/processed/
+
+# Airflow (execucao local)
+airflow/logs/
+airflow/db/
+airflow/*.cfg
+airflow/webserver_config.py
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

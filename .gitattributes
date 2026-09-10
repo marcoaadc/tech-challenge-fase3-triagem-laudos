@@ -1,0 +1,8 @@
+# Normaliza line endings para LF (Docker/Linux) independentemente do SO de checkout.
+* text=auto eol=lf
+
+# Binarios
+*.onnx binary
+*.joblib binary
+*.png binary
+*.jpg binary

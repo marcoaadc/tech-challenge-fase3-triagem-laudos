@@ -1,0 +1,11 @@
+# Dependencias de treino/exportacao usadas pela DAG (instaladas com as constraints do Airflow).
+scikit-learn>=1.5,<1.8
+pandas>=2.2,<3.0
+numpy>=1.26,<3.0
+joblib>=1.4
+skl2onnx>=1.17,<2.0
+onnx>=1.16,<2.0
+onnxruntime>=1.18,<1.24
+mlflow-skinny>=2.14,<3.0
+pydantic>=2.7,<3.0
+pydantic-settings>=2.3,<3.0

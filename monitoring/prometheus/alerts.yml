@@ -1,0 +1,63 @@
+# Regras de alerta da API de triagem (SLOs locais).
+#
+#   Disponibilidade : API respondendo ao scrape
+#   Erros           : taxa de 5xx < 1% em 5 min
+#   Latencia        : p95 ponta a ponta < 50 ms em 5 min
+#   Modelo          : inferencia p99 < 5 ms; distribuicao de classes sem colapso
+groups:
+  - name: triage-api
+    rules:
+      - alert: TriageApiDown
+        expr: up{job="triage-api"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "API de triagem fora do ar"
+          description: "O Prometheus nao consegue coletar metricas de {{ $labels.instance }} ha 30s."
+
+      - alert: TriageApiHighErrorRate
+        expr: |
+          sum(rate(triage_http_requests_total{status=~"5.."}[5m]))
+            / clamp_min(sum(rate(triage_http_requests_total[5m])), 1e-9) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Taxa de erro 5xx acima de 1%"
+          description: "{{ $value | humanizePercentage }} das requisicoes retornaram 5xx nos ultimos 5 minutos."
+
+      - alert: TriageApiHighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(triage_http_request_duration_seconds_bucket{path="/predict"}[5m])) by (le)) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latencia p95 de /predict acima de 50 ms"
+          description: "p95 atual: {{ $value | humanizeDuration }}."
+
+      - alert: TriageModelInferenceSlow
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(triage_model_inference_duration_seconds_bucket[5m])) by (le)) > 0.005
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Inferencia do modelo p99 acima de 5 ms"
+          description: "Verificar backend ({{ $labels.backend }}), threads do ONNX Runtime e carga do host."
+
+      - alert: TriageUrgentShareAnomaly
+        expr: |
+          (
+            sum(rate(triage_predictions_total{label="urgente"}[30m]))
+              / clamp_min(sum(rate(triage_predictions_total[30m])), 1e-9)
+          ) > 0.5 and sum(rate(triage_predictions_total[30m])) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Proporcao de laudos 'urgente' anormalmente alta"
+          description: "Mais de 50% das predicoes sao 'urgente' ha 15 min: possivel drift de entrada ou regressao do modelo."

@@ -1,0 +1,21 @@
+# Configuracao do Prometheus para a stack local (docker compose).
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+  external_labels:
+    environment: local
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: triage-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]
+        labels:
+          service: triage-api
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

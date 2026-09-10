@@ -1,0 +1,168 @@
+# Stack local de serving + observabilidade (+ orquestracao opcional).
+#
+#   docker compose up --build                       # api + prometheus + grafana
+#   docker compose --profile load up load           # gera trafego sintetico contra a API
+#   docker compose --profile airflow up airflow     # Airflow standalone com a DAG de retreino
+#   docker compose --profile mlflow up mlflow       # tracking server do MLflow (usado pela DAG)
+#
+# Portas: API 8000 | Prometheus 9090 | Grafana 3000 (admin/admin) | Airflow 8080 (admin/admin) | MLflow 5000
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+    image: triage-api:${APP_VERSION:-1.0.0}
+    container_name: triage-api
+    environment:
+      TRIAGE_MODEL_BACKEND: ${TRIAGE_MODEL_BACKEND:-onnx}
+      TRIAGE_LOG_LEVEL: ${TRIAGE_LOG_LEVEL:-INFO}
+      TRIAGE_LOG_JSON: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      # Permite que o retreino do Airflow publique um novo modelo sem rebuild da imagem.
+      - ./models:/app/models:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks: [observability]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: triage-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [observability]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: triage-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/triage-api.json
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    networks: [observability]
+
+  # Gerador de trafego: popula os paineis do Grafana com requisicoes reais.
+  load:
+    profiles: [load]
+    image: triage-api:${APP_VERSION:-1.0.0}
+    container_name: triage-load
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      PYTHONPATH: /app/src
+    volumes:
+      - ./scripts:/app/scripts:ro
+    command: ["python", "scripts/load_test.py", "--url", "http://api:8000", "--duration", "300", "--rps", "20"]
+    networks: [observability]
+
+  mlflow:
+    profiles: [mlflow, airflow]
+    image: ghcr.io/mlflow/mlflow:v2.22.0
+    container_name: triage-mlflow
+    command: >
+      mlflow server --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    restart: unless-stopped
+    networks: [observability]
+
+  airflow:
+    profiles: [airflow]
+    build:
+      context: .
+      dockerfile: airflow/Dockerfile
+    image: triage-airflow:${APP_VERSION:-1.0.0}
+    container_name: triage-airflow
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db/airflow
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+      AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL: "30"
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+      # Variaveis lidas pela DAG (caminhos dentro do container).
+      TRIAGE_DATA_DIR: /opt/airflow/project/data
+      TRIAGE_MODELS_DIR: /opt/airflow/project/models
+      TRIAGE_REPORTS_DIR: /opt/airflow/project/reports
+      TRIAGE_MLFLOW_TRACKING_URI: http://mlflow:5000
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags:ro
+      - ./data:/opt/airflow/project/data
+      - ./models:/opt/airflow/project/models
+      - ./reports:/opt/airflow/project/reports
+      - airflow-logs:/opt/airflow/logs
+    ports:
+      - "8080:8080"
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+    command: standalone
+    restart: unless-stopped
+    networks: [observability]
+
+  airflow-db:
+    profiles: [airflow]
+    image: postgres:16-alpine
+    container_name: triage-airflow-db
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [observability]
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  mlflow-data:
+  airflow-logs:
+  airflow-db:
+
+networks:
+  observability:
+    name: triage-observability

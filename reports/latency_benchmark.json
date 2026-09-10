@@ -1,0 +1,74 @@
+{
+  "model_version": "20260910.213610-440596bb",
+  "model_type": "tfidf+logreg",
+  "environment": {
+    "python": "3.10.4",
+    "platform": "Windows-10-10.0.19044-SP0",
+    "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel"
+  },
+  "artifacts": {
+    "sklearn_bytes": 149046,
+    "onnx_bytes": 230258
+  },
+  "n_texts": 500,
+  "results": [
+    {
+      "backend": "sklearn",
+      "mode": "single",
+      "n_calls": 2000,
+      "batch_size": 1,
+      "p50_ms": 0.5535499985853676,
+      "p90_ms": 0.7689900041441434,
+      "p95_ms": 0.910350004414795,
+      "p99_ms": 1.3877740011957937,
+      "mean_ms": 0.5982575000962242,
+      "min_ms": 0.4011999990325421,
+      "max_ms": 2.402300000539981,
+      "throughput_per_s": 1667.381556507388
+    },
+    {
+      "backend": "sklearn",
+      "mode": "batch",
+      "n_calls": 62,
+      "batch_size": 32,
+      "p50_ms": 3.469700001005549,
+      "p90_ms": 4.513430004590191,
+      "p95_ms": 4.752229995938251,
+      "p99_ms": 5.396737998598837,
+      "mean_ms": 3.578751613062078,
+      "min_ms": 2.569600001152139,
+      "max_ms": 5.442000001494307,
+      "throughput_per_s": 8913.188509217387
+    },
+    {
+      "backend": "onnx",
+      "mode": "single",
+      "n_calls": 2000,
+      "batch_size": 1,
+      "p50_ms": 0.12860000060754828,
+      "p90_ms": 0.17026999412337326,
+      "p95_ms": 0.20211000337440055,
+      "p99_ms": 0.3051870020863134,
+      "mean_ms": 0.13714729999992414,
+      "min_ms": 0.0836000035633333,
+      "max_ms": 0.7170999961090274,
+      "throughput_per_s": 7239.038105659134
+    },
+    {
+      "backend": "onnx",
+      "mode": "batch",
+      "n_calls": 62,
+      "batch_size": 32,
+      "p50_ms": 3.249999997933628,
+      "p90_ms": 3.9371399994706735,
+      "p95_ms": 4.110359997866908,
+      "p99_ms": 4.487152000583592,
+      "mean_ms": 3.348283871028182,
+      "min_ms": 2.658600002177991,
+      "max_ms": 4.729200001747813,
+      "throughput_per_s": 9522.712437179876
+    }
+  ],
+  "speedup_single_p50": 4.304432317031237,
+  "speedup_single_p95": 4.504230316242233
+}

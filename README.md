@@ -70,7 +70,6 @@ techallenger3/
 │   ├── latencia.md                   # Resultados de latência sklearn × ONNX (Etapa 4)
 │   ├── monitoramento.md              # Métricas, painéis e alertas (Etapa 3)
 │   ├── model_card.md                 # Model Card
-│   ├── roteiro_video_star.md         # Roteiro do vídeo (STAR)
 │   └── adr/                          # Decisões de arquitetura (ADRs)
 ├── models/                           # Modelo promovido: model.onnx, model.joblib, metadata.json, registry.json
 ├── monitoring/
@@ -285,7 +284,6 @@ make format
 | **Etapa 3** — dashboard Grafana (≥ 3 painéis) + JSON | `monitoring/grafana/dashboards/triage-api.json` (14 painéis) + [docs/monitoramento.md](docs/monitoramento.md) |
 | **Etapa 4** — treinar o classificador de texto | `src/triage/training/`, `triage.pipelines.train` |
 | **Etapa 4** — técnica de otimização (ONNX) e comparação de latência | `src/triage/training/export.py`, `src/triage/benchmark/`, `reports/latency_benchmark.md`, [docs/latencia.md](docs/latencia.md) |
-| **Etapa 4** — vídeo STAR | [docs/roteiro_video_star.md](docs/roteiro_video_star.md) · link do vídeo: *(adicionar após a gravação)* |
 | Bibliotecas: scikit-learn, FastAPI, prometheus-client, Airflow | `pyproject.toml`, `airflow/requirements.txt` |
 | CI/CD com ≥ 2 automações | lint, testes, pipeline, DAG, docker (+ release) |
 | Histórico de commits semântico | Conventional Commits (`feat:`, `fix:`, `ci:`, `docs:`, …) |
@@ -298,7 +296,6 @@ make format
 - [Monitoramento e observabilidade](docs/monitoramento.md)
 - [Model Card](docs/model_card.md)
 - [ADRs](docs/adr/) — 001 tempo real, 002 modelo leve, 003 ONNX Runtime
-- [Roteiro do vídeo (STAR)](docs/roteiro_video_star.md)
 
 ---
 

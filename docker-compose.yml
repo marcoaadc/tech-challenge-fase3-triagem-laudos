@@ -20,6 +20,10 @@ services:
       TRIAGE_MODEL_BACKEND: ${TRIAGE_MODEL_BACKEND:-onnx}
       TRIAGE_LOG_LEVEL: ${TRIAGE_LOG_LEVEL:-INFO}
       TRIAGE_LOG_JSON: "true"
+      TRIAGE_WORKERS: ${TRIAGE_WORKERS:-1}
+      # Vazio = sem autenticacao (stack local). Em producao defina TRIAGE_API_KEY no .env.
+      TRIAGE_API_KEY: ${TRIAGE_API_KEY:-}
+      TRIAGE_RATE_LIMIT_PER_MINUTE: ${TRIAGE_RATE_LIMIT_PER_MINUTE:-0}
     ports:
       - "8000:8000"
     volumes:
@@ -84,7 +88,8 @@ services:
       PYTHONPATH: /app/src
     volumes:
       - ./scripts:/app/scripts:ro
-    command: ["python", "scripts/load_test.py", "--url", "http://api:8000", "--duration", "300", "--rps", "20"]
+    entrypoint: ["python", "scripts/load_test.py"]
+    command: ["--url", "http://api:8000", "--duration", "300", "--rps", "20"]
     networks: [observability]
 
   mlflow:
@@ -124,6 +129,9 @@ services:
       TRIAGE_MODELS_DIR: /opt/airflow/project/models
       TRIAGE_REPORTS_DIR: /opt/airflow/project/reports
       TRIAGE_MLFLOW_TRACKING_URI: http://mlflow:5000
+      # A ultima task da DAG pede a API para recarregar o modelo promovido.
+      TRIAGE_API_URL: http://api:8000
+      TRIAGE_API_KEY: ${TRIAGE_API_KEY:-}
     volumes:
       - ./airflow/dags:/opt/airflow/dags:ro
       - ./data:/opt/airflow/project/data

@@ -12,6 +12,7 @@ htmlcov
 mlruns
 mlartifacts
 data
+!docker
 reports
 docs
 tests

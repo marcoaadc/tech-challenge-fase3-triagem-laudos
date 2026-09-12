@@ -14,7 +14,7 @@
 # --------------------------------------------------------------------------
 # Stage 1: builder
 # --------------------------------------------------------------------------
-FROM python:3.10-slim AS builder
+FROM python:3.14-slim AS builder
 
 ENV PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -33,7 +33,7 @@ RUN poetry install --only main --no-root --no-ansi
 # --------------------------------------------------------------------------
 # Stage 2: runtime
 # --------------------------------------------------------------------------
-FROM python:3.10-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 ARG APP_VERSION=dev
 LABEL org.opencontainers.image.title="triage-api" \

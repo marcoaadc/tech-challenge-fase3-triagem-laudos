@@ -1,6 +1,6 @@
 # Imagem do Airflow com o pacote `triage` (e suas dependencias de treino) instalado.
 # A DAG chama diretamente as funcoes run_* dos estagios do pipeline.
-FROM apache/airflow:2.10.5-python3.10
+FROM apache/airflow:3.3.1-python3.10
 
 USER root
 RUN apt-get update \

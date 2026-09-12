@@ -12,6 +12,7 @@ help:
 	@echo "  test          Roda a suite de testes"
 	@echo "  test-cov      Testes com relatorio de cobertura"
 	@echo "  pipeline      ingest -> train -> export -> promote -> benchmark"
+	@echo "  experiment-public  Roda o pipeline no Medical Abstracts TC Corpus (generalizacao)"
 	@echo "  api           Sobe a API localmente (uvicorn, hot reload)"
 	@echo "  load          Teste de carga contra http://127.0.0.1:8000"
 	@echo "  docker-build  Builda a imagem da API"
@@ -44,6 +45,9 @@ pipeline:
 	poetry run python -m triage.pipelines.export
 	poetry run python -m triage.pipelines.promote
 	poetry run python -m triage.pipelines.benchmark
+
+experiment-public:
+	poetry run python scripts/experiment_public_dataset.py
 
 api:
 	poetry run uvicorn triage.api.main:app --reload --port 8000

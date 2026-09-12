@@ -1,6 +1,6 @@
 [project]
 name = "triage"
-version = "1.0.0"
+version = "1.1.0"
 description = "Triagem automatica de laudos medicos: classificador NLP servido via FastAPI com CI/CD, Airflow, Prometheus/Grafana e otimizacao ONNX"
 authors = [{ name = "Marco", email = "marcoaadc@gmail.com" }]
 readme = "README.md"

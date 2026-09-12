@@ -84,10 +84,10 @@ Os três grandes provedores atendem o cenário. A escolha considerou o **encaixe
 | Latência | p95 < 50 ms ponta a ponta na rede do hospital | Modelo ONNX (< 1 ms), 1 worker por vCPU, `intra_op_threads=1`, sem I/O na requisição |
 | Disponibilidade | 99,9% | ≥ 2 tarefas em AZs diferentes, ALB com health check, rolling deploy com circuit breaker |
 | Escalabilidade | 10× o pico sem intervenção | Target tracking no ECS por CPU (70%) e por `RequestCountPerTarget` |
-| Segurança | Dados clínicos em trânsito e em repouso | TLS no ALB, VPC privada para as tarefas, IAM por tarefa, sem PHI nos logs (apenas IDs de requisição) |
+| Segurança | Dados clínicos em trânsito e em repouso; acesso só por sistemas autorizados | TLS no ALB, VPC privada, IAM por tarefa; **API key** (`X-API-Key`, segredo no Secrets Manager) e **rate limit** na aplicação, com WAF/ALB como primeira camada; sem PHI nos logs |
 | Observabilidade | Métricas RED + métricas de modelo | `prometheus_client` → AMP; alertas de erro, latência e distribuição de classes |
 | Reprodutibilidade | Modelo promovido rastreável | `metadata.json` com hash SHA-256 dos artefatos e do dataset; `registry.json` com histórico de promoções |
-| Retreino | Diário, com quality gate | DAG Airflow: ingest → validate → train → export ONNX → gate → promote |
+| Retreino | Diário, com quality gate, sem intervenção manual | DAG Airflow: ingest → validate → train → export ONNX → gate → promote → `POST /model/reload` (1 worker por tarefa) ou rolling deploy da imagem |
 
 ## 5. Estimativa de custo (ordem de grandeza, us-east-1/sa-east-1)
 

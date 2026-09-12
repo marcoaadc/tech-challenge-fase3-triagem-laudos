@@ -9,8 +9,8 @@
 | Framework | scikit-learn 1.7 (treino) · ONNX Runtime 1.23 (inferência) |
 | Vocabulário | 4.955 n-gramas |
 | Artefatos | `models/model.joblib` (146 KB), `models/model.onnx` (225 KB), `models/metadata.json` (métricas, hashes SHA-256, hiperparâmetros) |
-| Versão | `20260910.213610-440596bb` (timestamp UTC + hash do dataset), registrada em `models/registry.json` |
-| Código | `src/triage/training/pipeline.py` (treino), `src/triage/training/export.py` (ONNX), `src/triage/serving/predictor.py` (inferência) |
+| Versão | `20260912.125820-440596bb` (timestamp UTC + hash do dataset), registrada em `models/registry.json` |
+| Código | `src/triage/training/pipeline.py` (treino), `src/triage/training/calibration.py` (calibração), `src/triage/training/export.py` (ONNX), `src/triage/serving/predictor.py` (inferência) |
 | Idioma | Português (Brasil) |
 
 ### Seleção do modelo
@@ -19,9 +19,9 @@ Três candidatos foram treinados sobre o mesmo split (70/15/15, estratificado, `
 
 | Candidato | F1 macro (val) | Recall `urgente` (val) | Tempo de treino |
 |---|---|---|---|
-| **Regressão Logística** (escolhido) | **0,9609** | 0,9494 | 0,6 s |
+| **Regressão Logística** (escolhido) | **0,9609** | 0,9494 | 0,5 s |
 | Complement Naive Bayes | 0,9586 | 0,9551 | 0,5 s |
-| Random Forest (200 árvores) | 0,9365 | 0,8989 | 2,0 s |
+| Random Forest (200 árvores) | 0,9365 | 0,8989 | 1,8 s |
 
 O Random Forest, sugerido no enunciado, ficou abaixo em qualidade e é ~70× mais lento na inferência unitária (~40 ms), o que o desqualifica para a API em tempo real.
 
@@ -78,9 +78,45 @@ Dos 178 laudos urgentes, 10 foram classificados abaixo (5 como `normal`, 5 como 
 |---|---|---|
 | **100%** | 0,0095 | 0,0004 |
 
+### Calibração (conjunto de teste)
+
+As probabilidades da API são usadas como critério operacional (ex.: revisar `atencao` de baixa confiança), então precisam corresponder à frequência real de acerto. Medido em `triage.training.calibration` a cada treino e registrado em `metadata.json` e no MLflow.
+
+| Métrica | Valor | Leitura |
+|---|---|---|
+| Brier score (multiclasse) | 0,076 | 0 é perfeito; 0,67 seria um chute uniforme em 3 classes |
+| ECE (erro de calibração esperado) | **0,036** | abaixo do limiar usual de 0,05: bem calibrado |
+| MCE (erro máximo por faixa) | 0,366 | vem da faixa 0,4-0,5 com apenas 6 amostras |
+| Confiança média vs. acurácia | 0,931 vs. 0,967 | levemente subconfiante: o lado seguro para triagem |
+
+Diagrama de confiabilidade (faixas de confiança da classe prevista):
+
+| Faixa | Amostras | Confiança média | Acurácia |
+|---|---|---|---|
+| 0,4 - 0,5 | 6 | 0,467 | 0,833 |
+| 0,5 - 0,6 | 14 | 0,550 | 0,786 |
+| 0,6 - 0,7 | 17 | 0,662 | 0,941 |
+| 0,7 - 0,8 | 31 | 0,768 | 1,000 |
+| 0,8 - 0,9 | 120 | 0,863 | 0,975 |
+| 0,9 - 1,0 | 712 | 0,967 | 0,969 |
+
+Decisão: **não** aplicar recalibração (Platt/isotônica). A Regressão Logística já sai calibrada no regime que importa (≥ 0,8 de confiança concentra 92% dos laudos), e um estágio extra adicionaria risco na exportação ONNX sem ganho mensurável.
+
 ### Latência
 
-Ver [`docs/latencia.md`](latencia.md) e `reports/latency_benchmark.md`: inferência unitária in-process de 0,55 ms (scikit-learn) para 0,13 ms (ONNX) no p50.
+Ver [`docs/latencia.md`](latencia.md) e `reports/latency_benchmark.md`: inferência unitária in-process de 0,55 ms (scikit-learn) para 0,14 ms (ONNX) no p50.
+
+### Generalização para um corpus público real
+
+O mesmo pipeline (sem ajuste) foi executado no *Medical Abstracts TC Corpus* (11.550 / 2.888 resumos em inglês, 5 categorias de doença) por `scripts/experiment_public_dataset.py`; fonte `reports/public_dataset_experiment.md`.
+
+| Candidato | Acurácia | F1 macro |
+|---|---|---|
+| Classe majoritária | 0,333 | — |
+| TF-IDF + Regressão Logística | 0,512 | 0,510 |
+| TF-IDF + Complement NB | 0,542 | 0,518 |
+
+Paridade ONNX de 99,8% dos rótulos; ECE 0,12 (o modelo fica sobreconfiante em um problema muito mais difícil). O corpus tem categorias sobrepostas e uma classe guarda-chuva, e o pipeline não foi ajustado para ele: o resultado demonstra que o código funciona em dados reais de outro idioma e com outro conjunto de classes, e ao mesmo tempo deixa claro que as métricas do dataset sintético não se transferem para dados reais sem retreino e reavaliação.
 
 ## Quality gate de promoção
 
@@ -90,7 +126,7 @@ Um candidato só substitui o modelo servido se, no teste: F1 macro ≥ 0,90, rec
 
 1. **Dados sintéticos:** a variedade lexical é limitada pelos templates; as métricas não se transferem para laudos reais sem retreino e reavaliação.
 2. **Bag-of-n-grams:** negações e contexto longo são capturados apenas parcialmente por bigramas ("sem sinais de pneumotórax" vs "pneumotórax volumoso").
-3. **Sem calibração explícita:** as probabilidades da Regressão Logística são razoavelmente calibradas, mas não foram ajustadas (ex.: Platt/isotônica) para uso como limiar clínico.
+3. **Calibração medida, não garantida fora da distribuição:** ECE de 0,036 no teste sintético, mas 0,12 no corpus público; em dados reais a calibração precisa ser reavaliada antes de usar a confiança como limiar clínico.
 4. **Classe `atencao` é a mais ambígua:** concentra a maior parte das confusões, por ser intermediária entre as outras duas.
 
 ## Considerações éticas e de segurança

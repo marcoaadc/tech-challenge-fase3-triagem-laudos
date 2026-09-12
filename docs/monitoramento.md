@@ -36,8 +36,12 @@ A instrumentação usa `prometheus_client` com um registry dedicado (`triage.api
 | `triage_model_inference_duration_seconds` | Histogram | `backend` | Latência só do modelo, separada do overhead HTTP |
 | `triage_predictions_total` | Counter | `label` | Distribuição das classes previstas (drift de saída) |
 | `triage_prediction_confidence` | Histogram | — | Confiança das predições (queda = possível drift de entrada) |
-| `triage_model_info` | Gauge | `version`, `type`, `backend` | Qual modelo está servindo (rastreabilidade de deploy) |
+| `triage_model_info` | Gauge | `version`, `type`, `backend` | Qual modelo está servindo (rastreabilidade de deploy); zerado e reescrito a cada reload |
+| `triage_model_reloads_total` | Counter | `result` | Recargas de modelo em runtime (`success` / `failure`) |
+| `triage_rate_limited_total` | Counter | `path` | Requisições rejeitadas por limite de taxa (`429`) |
 | `triage_exceptions_total` | Counter | `type` | Exceções não tratadas |
+
+Com mais de um worker uvicorn (`TRIAGE_WORKERS>1`), o entrypoint do container ativa o modo multiprocesso do `prometheus_client` (`PROMETHEUS_MULTIPROC_DIR`) e `/metrics` agrega as séries de todos os processos; o job `docker` do CI valida esse cenário com 3 workers.
 
 Os buckets dos histogramas foram escolhidos para uma API de baixa latência (1 ms a 5 s para HTTP; 50 µs a 500 ms para o modelo), de modo que `histogram_quantile` tenha resolução nos percentis relevantes.
 

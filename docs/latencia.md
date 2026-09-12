@@ -20,12 +20,12 @@ Ambiente: Windows 10, Intel Core i7 11ª geração (1 thread de inferência), Py
 
 | Backend | Modo | Batch | Chamadas | p50 (ms) | p90 (ms) | p95 (ms) | p99 (ms) | Média (ms) | Throughput (laudos/s) |
 |---|---|---|---|---|---|---|---|---|---|
-| scikit-learn | unitário | 1 | 2000 | 0,554 | 0,769 | 0,910 | 1,388 | 0,598 | 1.667 |
-| **ONNX Runtime** | unitário | 1 | 2000 | **0,129** | **0,170** | **0,202** | **0,305** | **0,137** | **7.239** |
-| scikit-learn | lote | 32 | 62 | 3,470 | 4,513 | 4,752 | 5,397 | 3,579 | 8.913 |
-| ONNX Runtime | lote | 32 | 62 | 3,250 | 3,937 | 4,110 | 4,487 | 3,348 | 9.523 |
+| scikit-learn | unitário | 1 | 2000 | 0,550 | 0,658 | 0,830 | 1,223 | 0,575 | 1.734 |
+| **ONNX Runtime** | unitário | 1 | 2000 | **0,141** | **0,220** | **0,265** | **0,385** | **0,159** | **6.258** |
+| scikit-learn | lote | 32 | 62 | 3,494 | 4,242 | 4,756 | 6,540 | 3,587 | 8.895 |
+| ONNX Runtime | lote | 32 | 62 | 3,460 | 4,600 | 5,233 | 6,113 | 3,666 | 8.700 |
 
-**Speedup na inferência unitária (cenário da API): 4,3× no p50, 4,5× no p95, 4,6× no p99.**
+**Speedup na inferência unitária (cenário da API): 3,9× no p50, 3,1× no p95, 3,2× no p99.** Execuções anteriores no mesmo ambiente registraram 4,3× a 4,8× no p50; a variação entre execuções é do próprio host (Windows, laptop), não do modelo.
 
 Leitura: no modo unitário o custo do scikit-learn é dominado pelo overhead Python do `TfidfVectorizer.transform` (regex, construção de matriz esparsa, normalização), que o ONNX elimina. Em lote de 32 esse overhead se dilui e os dois backends convergem (a álgebra é a mesma) — o ganho do ONNX é justamente no caso que importa para uma API em tempo real.
 
@@ -69,7 +69,7 @@ docker compose up -d && docker compose --profile load up load
 
 | | Original (scikit-learn) | Otimizado (ONNX Runtime) |
 |---|---|---|
-| Inferência unitária p50 / p95 (isolada) | 0,554 / 0,910 ms | **0,129 / 0,202 ms** |
+| Inferência unitária p50 / p95 (isolada) | 0,550 / 0,830 ms | **0,141 / 0,265 ms** |
 | Inferência dentro da API p50 / p99 (8 clientes) | 1,069 / 5,655 ms | **0,480 / 2,298 ms** |
 | Paridade de rótulos | — | 100% |
 | Artefato | 146 KB | 225 KB |

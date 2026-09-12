@@ -1,5 +1,6 @@
 version: 2
 updates:
+  # Bumps de versao maior (ex.: setup-python v5 -> v7) exigem revisao manual: so minor/patch automaticos.
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -7,6 +8,9 @@ updates:
     labels: [dependencies, ci]
     commit-message:
       prefix: "ci"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: pip
     directory: /
@@ -23,12 +27,17 @@ updates:
       dev:
         patterns: ["pytest*", "ruff", "httpx", "pre-commit"]
 
+  # Imagens base: Python 3.10 e Airflow 2.10 sao decisoes do projeto (constraints e compatibilidade);
+  # trocar de versao maior e uma mudanca planejada, nao automatica.
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: monthly
     commit-message:
       prefix: "build"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
   - package-ecosystem: docker
     directory: /airflow
@@ -36,3 +45,6 @@ updates:
       interval: monthly
     commit-message:
       prefix: "build"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]

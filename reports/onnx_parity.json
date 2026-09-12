@@ -1,5 +1,5 @@
 {
-  "model_version": "20260910.213610-440596bb",
+  "model_version": "20260912.125820-440596bb",
   "n_samples": 1000,
   "label_agreement": 1.0,
   "max_abs_prob_diff": 0.009461064319458035,

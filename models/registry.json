@@ -1,5 +1,5 @@
 {
-  "current": "20260910.213610-440596bb",
+  "current": "20260912.125820-440596bb",
   "history": [
     {
       "model_version": "20260910.213610-440596bb",
@@ -8,6 +8,14 @@
       "f1_macro_test": 0.9635973020728011,
       "urgent_recall_test": 0.9438202247191011,
       "onnx_sha256": "de5a17420543071d3b1f562a6ced3d4b52678bd3a3b8a72d06e629f3fbe19d3d"
+    },
+    {
+      "model_version": "20260912.125820-440596bb",
+      "model_type": "tfidf+logreg",
+      "promoted_at": "2026-09-12T12:58:30+00:00",
+      "f1_macro_test": 0.9635973020728011,
+      "urgent_recall_test": 0.9438202247191011,
+      "onnx_sha256": "dfb520de2d75adf45f9d5fc1c16b3df322789bbfb65cbaa2e99d105a9a739bec"
     }
   ]
 }

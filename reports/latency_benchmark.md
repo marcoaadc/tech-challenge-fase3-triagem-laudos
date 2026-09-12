@@ -1,4 +1,4 @@
-# Benchmark de latencia - modelo 20260910.213610-440596bb (tfidf+logreg)
+# Benchmark de latencia - modelo 20260912.125820-440596bb (tfidf+logreg)
 
 Ambiente: Python 3.10.4 | Windows-10-10.0.19044-SP0 | Intel64 Family 6 Model 140 Stepping 1, GenuineIntel
 
@@ -6,9 +6,9 @@ Tamanho dos artefatos: scikit-learn 146 KB | ONNX 225 KB
 
 | Backend | Modo | Batch | Chamadas | p50 (ms) | p90 (ms) | p95 (ms) | p99 (ms) | Media (ms) | Throughput (laudos/s) |
 |---|---|---|---|---|---|---|---|---|---|
-| sklearn | single | 1 | 2000 | 0.554 | 0.769 | 0.910 | 1.388 | 0.598 | 1667 |
-| sklearn | batch | 32 | 62 | 3.470 | 4.513 | 4.752 | 5.397 | 3.579 | 8913 |
-| onnx | single | 1 | 2000 | 0.129 | 0.170 | 0.202 | 0.305 | 0.137 | 7239 |
-| onnx | batch | 32 | 62 | 3.250 | 3.937 | 4.110 | 4.487 | 3.348 | 9523 |
+| sklearn | single | 1 | 2000 | 0.550 | 0.658 | 0.830 | 1.223 | 0.575 | 1734 |
+| sklearn | batch | 32 | 62 | 3.494 | 4.242 | 4.756 | 6.540 | 3.587 | 8895 |
+| onnx | single | 1 | 2000 | 0.141 | 0.220 | 0.265 | 0.385 | 0.159 | 6258 |
+| onnx | batch | 32 | 62 | 3.460 | 4.600 | 5.233 | 6.113 | 3.666 | 8700 |
 
-**Speedup ONNX vs scikit-learn (inferencia unitaria):** 4.3x no p50, 4.5x no p95.
+**Speedup ONNX vs scikit-learn (inferencia unitaria):** 3.9x no p50, 3.1x no p95.

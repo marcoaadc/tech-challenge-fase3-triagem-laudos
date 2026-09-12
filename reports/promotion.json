@@ -1,5 +1,5 @@
 {
-  "model_version": "20260910.213610-440596bb",
+  "model_version": "20260912.125820-440596bb",
   "model_type": "tfidf+logreg",
   "promoted": true,
   "violations": [],
@@ -9,5 +9,5 @@
     "min_onnx_label_agreement": 0.99,
     "max_onnx_prob_diff": 0.05
   },
-  "decided_at": "2026-09-10T21:36:24+00:00"
+  "decided_at": "2026-09-12T12:58:30+00:00"
 }

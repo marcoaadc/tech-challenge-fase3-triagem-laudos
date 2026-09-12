@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 import time
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from triage import __version__
-from triage.api.metrics import observe_prediction
+from triage.api.metrics import MODEL_RELOADS_TOTAL, observe_prediction
 from triage.api.schemas import (
     BatchPredictRequest,
     BatchPredictResponse,
@@ -17,11 +18,16 @@ from triage.api.schemas import (
     PredictRequest,
     PredictResponse,
     ReadinessResponse,
+    ReloadResponse,
 )
+from triage.api.security import enforce_rate_limit, require_api_key
 from triage.config.settings import Settings
-from triage.serving.predictor import Predictor
+from triage.serving.predictor import ModelNotFoundError, Predictor
+
+logger = logging.getLogger("triage.api")
 
 router = APIRouter()
+protected = [Depends(require_api_key), Depends(enforce_rate_limit)]
 
 
 def _get_predictor(request: Request) -> Predictor:
@@ -41,6 +47,12 @@ def _validate_length(text: str, settings: Settings) -> None:
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"texto excede o limite de {settings.max_text_length} caracteres",
         )
+
+
+def _summary(predictor: Predictor) -> ModelSummary:
+    return ModelSummary(
+        versao=predictor.metadata.model_version, tipo=predictor.metadata.model_type, backend=predictor.backend
+    )
 
 
 @router.get("/health", response_model=HealthResponse, tags=["operacional"], summary="Liveness probe")
@@ -79,7 +91,45 @@ def model_info(request: Request) -> ModelInfoResponse:
 
 
 @router.post(
-    "/predict", response_model=PredictResponse, tags=["inferencia"], summary="Classifica a urgencia de um laudo"
+    "/model/reload",
+    response_model=ReloadResponse,
+    tags=["modelo"],
+    summary="Recarrega o modelo a partir do diretorio configurado",
+    dependencies=[Depends(require_api_key)],
+)
+def model_reload(request: Request) -> ReloadResponse:
+    """Troca o modelo em memoria pelo que estiver em ``models_dir`` (ex.: apos a DAG promover um novo).
+
+    Se a carga falhar, o modelo atual continua servindo e a resposta e 503.
+    """
+    from triage.api.main import load_model_into
+
+    previous = getattr(request.app.state, "predictor", None)
+    previous_version = previous.metadata.model_version if previous else None
+    start = time.perf_counter()
+    try:
+        predictor = load_model_into(request.app, _get_settings(request))
+    except (ModelNotFoundError, ValueError, OSError) as exc:
+        MODEL_RELOADS_TOTAL.labels(result="failure").inc()
+        logger.error("falha ao recarregar o modelo: %s", exc)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"recarga falhou: {exc}") from exc
+    MODEL_RELOADS_TOTAL.labels(result="success").inc()
+    return ReloadResponse(
+        status="reloaded",
+        versao_anterior=previous_version,
+        versao_atual=predictor.metadata.model_version,
+        alterado=previous_version != predictor.metadata.model_version,
+        duracao_ms=round((time.perf_counter() - start) * 1000, 3),
+        modelo=_summary(predictor),
+    )
+
+
+@router.post(
+    "/predict",
+    response_model=PredictResponse,
+    tags=["inferencia"],
+    summary="Classifica a urgencia de um laudo",
+    dependencies=protected,
 )
 def predict(payload: PredictRequest, request: Request) -> PredictResponse:
     predictor = _get_predictor(request)
@@ -96,14 +146,16 @@ def predict(payload: PredictRequest, request: Request) -> PredictResponse:
         confianca=prediction.confidence,
         probabilidades=prediction.probabilities,
         latencia_ms=round(elapsed * 1000, 3),
-        modelo=ModelSummary(
-            versao=predictor.metadata.model_version, tipo=predictor.metadata.model_type, backend=predictor.backend
-        ),
+        modelo=_summary(predictor),
     )
 
 
 @router.post(
-    "/predict/batch", response_model=BatchPredictResponse, tags=["inferencia"], summary="Classifica um lote de laudos"
+    "/predict/batch",
+    response_model=BatchPredictResponse,
+    tags=["inferencia"],
+    summary="Classifica um lote de laudos",
+    dependencies=protected,
 )
 def predict_batch(payload: BatchPredictRequest, request: Request) -> BatchPredictResponse:
     predictor = _get_predictor(request)
@@ -122,9 +174,7 @@ def predict_batch(payload: BatchPredictRequest, request: Request) -> BatchPredic
     predictions = predictor.predict(payload.laudos)
     elapsed = time.perf_counter() - start
     per_item = elapsed / max(len(predictions), 1)
-    summary = ModelSummary(
-        versao=predictor.metadata.model_version, tipo=predictor.metadata.model_type, backend=predictor.backend
-    )
+    summary = _summary(predictor)
     results = []
     for p in predictions:
         observe_prediction(predictor.backend, p.label, p.confidence, per_item)

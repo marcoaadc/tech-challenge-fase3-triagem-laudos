@@ -57,6 +57,15 @@ class ReadinessResponse(BaseModel):
     versao_modelo: str | None = None
 
 
+class ReloadResponse(BaseModel):
+    status: str
+    versao_anterior: str | None
+    versao_atual: str
+    alterado: bool = Field(..., description="True se a versao servida mudou com a recarga.")
+    duracao_ms: float
+    modelo: ModelSummary
+
+
 class ModelInfoResponse(BaseModel):
     versao: str
     tipo: str

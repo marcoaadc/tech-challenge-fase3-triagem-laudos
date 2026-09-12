@@ -28,7 +28,16 @@ class Settings(BaseSettings):
     # --- Servidor ----------------------------------------------------------
     host: str = "0.0.0.0"
     port: int = 8000
-    workers: int = 1
+    workers: int = Field(default=1, ge=1, description="Processos uvicorn. >1 exige PROMETHEUS_MULTIPROC_DIR.")
+
+    # --- Seguranca ---------------------------------------------------------
+    api_key: str | None = Field(
+        default=None,
+        description="Chave exigida no header X-API-Key em /predict, /predict/batch e /model/reload. Vazio desativa.",
+    )
+    rate_limit_per_minute: int = Field(
+        default=0, ge=0, description="Limite de requisicoes por minuto por cliente nas rotas de inferencia. 0 desativa."
+    )
 
     # --- Modelo ------------------------------------------------------------
     models_dir: Path = Field(default=Path("models"), description="Diretorio com os artefatos do modelo.")
@@ -51,6 +60,10 @@ class Settings(BaseSettings):
     @property
     def processed_dir(self) -> Path:
         return self.data_dir / "processed"
+
+    @property
+    def api_key_enabled(self) -> bool:
+        return bool(self.api_key)
 
 
 @lru_cache

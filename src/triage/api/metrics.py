@@ -9,12 +9,20 @@ Metricas expostas em ``/metrics`` (formato de exposicao do Prometheus):
 - ``triage_predictions_total{label}``: predicoes por classe (permite ver drift de distribuicao).
 - ``triage_prediction_confidence``: histograma da confianca das predicoes.
 - ``triage_model_info{version,type,backend}``: gauge=1 com as labels do modelo carregado.
+- ``triage_model_reloads_total{result}``: recargas do modelo em runtime.
+- ``triage_rate_limited_total{path}``: requisicoes rejeitadas por limite de taxa.
 - ``triage_exceptions_total{type}``: excecoes nao tratadas.
+
+Modo multiprocesso: com ``PROMETHEUS_MULTIPROC_DIR`` definido (varios workers uvicorn), o
+``prometheus_client`` grava as series em arquivos mmap e ``render_metrics`` agrega todos os
+processos. Sem a variavel, o registry local e usado diretamente.
 """
 
 from __future__ import annotations
 
-from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
+import os
+
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Gauge, Histogram, generate_latest
 
 REGISTRY = CollectorRegistry(auto_describe=True)
 
@@ -39,6 +47,7 @@ HTTP_IN_PROGRESS = Gauge(
     "triage_http_requests_in_progress",
     "Requisicoes HTTP em andamento.",
     registry=REGISTRY,
+    multiprocess_mode="livesum",
 )
 MODEL_INFERENCE_DURATION = Histogram(
     "triage_model_inference_duration_seconds",
@@ -64,6 +73,19 @@ MODEL_INFO = Gauge(
     "Informacoes do modelo carregado (valor sempre 1).",
     ["version", "type", "backend"],
     registry=REGISTRY,
+    multiprocess_mode="max",
+)
+MODEL_RELOADS_TOTAL = Counter(
+    "triage_model_reloads_total",
+    "Recargas do modelo em runtime por resultado.",
+    ["result"],
+    registry=REGISTRY,
+)
+RATE_LIMITED_TOTAL = Counter(
+    "triage_rate_limited_total",
+    "Requisicoes rejeitadas por limite de taxa.",
+    ["path"],
+    registry=REGISTRY,
 )
 EXCEPTIONS_TOTAL = Counter(
     "triage_exceptions_total",
@@ -77,3 +99,20 @@ def observe_prediction(backend: str, label: str, confidence: float, inference_se
     MODEL_INFERENCE_DURATION.labels(backend=backend).observe(inference_seconds)
     PREDICTIONS_TOTAL.labels(label=label).inc()
     PREDICTION_CONFIDENCE.observe(confidence)
+
+
+def set_model_info(version: str, model_type: str, backend: str) -> None:
+    """Marca o modelo servido; zera as combinacoes anteriores para nao deixar series orfas apos reload."""
+    MODEL_INFO.clear()
+    MODEL_INFO.labels(version=version, type=model_type, backend=backend).set(1)
+
+
+def render_metrics() -> tuple[bytes, str]:
+    """Serializa as metricas (agregando processos quando em modo multiprocesso)."""
+    if os.environ.get("PROMETHEUS_MULTIPROC_DIR"):
+        from prometheus_client import multiprocess
+
+        registry = CollectorRegistry()
+        multiprocess.MultiProcessCollector(registry)
+        return generate_latest(registry), CONTENT_TYPE_LATEST
+    return generate_latest(REGISTRY), CONTENT_TYPE_LATEST

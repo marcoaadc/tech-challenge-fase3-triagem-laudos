@@ -17,6 +17,7 @@ EXPECTED_ORDER = [
     "quality_gate",
     "promote_model",
     "benchmark_latency",
+    "reload_api",
 ]
 
 
@@ -37,5 +38,7 @@ def test_dag_structure(dagbag) -> None:
     assert dag.task_ids and set(dag.task_ids) == set(EXPECTED_ORDER)
     assert dag.catchup is False
     assert dag.max_active_runs == 1
+    assert {"n_samples", "seed", "min_f1_macro", "min_urgent_recall"} <= set(dag.params)
+    assert dag.on_failure_callback is not None
     for upstream, downstream in zip(EXPECTED_ORDER, EXPECTED_ORDER[1:], strict=True):
         assert downstream in dag.get_task(upstream).downstream_task_ids

@@ -16,12 +16,14 @@ from triage import __version__
 from triage.config.settings import get_settings
 from triage.data.validation import validate_dataset
 from triage.pipelines._cli import build_parser, setup_logging, write_json
+from triage.training.calibration import calibration_report
 from triage.training.metadata import SKLEARN_FILENAME, ModelMetadata, sha256_of
 from triage.training.pipeline import (
     MODEL_CANDIDATES,
     TFIDF_PARAMS,
     build_pipeline,
     evaluate_pipeline,
+    predict_proba_labels,
     select_best,
     train_pipeline,
 )
@@ -58,6 +60,8 @@ def _mlflow_log(
                 mlflow.log_metrics(info["val"].flat_metrics("val_"))
                 mlflow.log_metric("fit_seconds", info["fit_seconds"])
         mlflow.log_metrics({f"test_{k}": v for k, v in metadata.metrics["test"].items() if isinstance(v, float)})
+        calibration = metadata.metrics.get("calibration", {})
+        mlflow.log_metrics({f"test_{k}": calibration[k] for k in ("brier_score", "ece", "mce") if k in calibration})
 
 
 def run_train(
@@ -100,6 +104,11 @@ def run_train(
     test_eval = evaluate_pipeline(best_pipe, test_df["text"], test_df["label"])
     logger.info("melhor candidato: %s | teste: f1_macro=%.4f acc=%.4f", best, test_eval.f1_macro, test_eval.accuracy)
     logger.info("\n%s", test_eval.report_text)
+    _, test_proba = predict_proba_labels(best_pipe, test_df["text"])
+    calibration = calibration_report(test_proba, test_df["label"], best_pipe.classes_)
+    logger.info(
+        "calibracao (teste): brier=%.4f ece=%.4f mce=%.4f", calibration.brier_score, calibration.ece, calibration.mce
+    )
 
     output_dir.mkdir(parents=True, exist_ok=True)
     model_path = output_dir / SKLEARN_FILENAME
@@ -123,6 +132,7 @@ def run_train(
         metrics={
             "validation": {name: r["val"].as_dict() | {"fit_seconds": r["fit_seconds"]} for name, r in results.items()},
             "test": test_eval.as_dict(),
+            "calibration": calibration.as_dict(),
             "dataset": validation.as_dict(),
         },
         seed=seed,
@@ -142,6 +152,7 @@ def run_train(
                     name: asdict(r["val"]) | {"fit_seconds": r["fit_seconds"]} for name, r in results.items()
                 },
                 "test": asdict(test_eval),
+                "calibration": calibration.as_dict(),
             },
         )
 

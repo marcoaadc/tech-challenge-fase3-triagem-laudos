@@ -83,8 +83,11 @@ class EvaluationResult:
 
     @property
     def urgent_recall(self) -> float:
-        """Recall da classe ``urgente``: a metrica clinicamente critica (falso negativo = risco)."""
-        return self.per_class["urgente"]["recall"]
+        """Recall da classe ``urgente``: a metrica clinicamente critica (falso negativo = risco).
+
+        Retorna NaN quando a classe nao existe no problema (ex.: experimento com outro dataset).
+        """
+        return self.per_class.get("urgente", {}).get("recall", float("nan"))
 
     def flat_metrics(self, prefix: str = "") -> dict[str, float]:
         out = {
@@ -110,10 +113,13 @@ class EvaluationResult:
         }
 
 
-def evaluate_pipeline(pipe: Pipeline, texts: Sequence[str], labels: Sequence[str]) -> EvaluationResult:
+def evaluate_pipeline(
+    pipe: Pipeline, texts: Sequence[str], labels: Sequence[str], label_list: Sequence[str] | None = None
+) -> EvaluationResult:
+    """Avalia o pipeline. ``label_list`` permite outros conjuntos de classes (padrao: as 3 de urgencia)."""
     y_true = list(labels)
     y_pred = pipe.predict(prepare_texts(texts))
-    label_list = list(LABELS)
+    label_list = list(label_list) if label_list is not None else list(LABELS)
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred, labels=label_list, zero_division=0)
     per_class = {
         lb: {"precision": float(p[i]), "recall": float(r[i]), "f1": float(f[i]), "support": int(s[i])}
@@ -134,7 +140,7 @@ def select_best(results: dict[str, EvaluationResult]) -> str:
     """Escolhe o candidato por F1 macro; desempate pelo recall de ``urgente``."""
     if not results:
         raise ValueError("nenhum resultado para selecionar")
-    return max(results, key=lambda k: (round(results[k].f1_macro, 4), results[k].urgent_recall))
+    return max(results, key=lambda k: (round(results[k].f1_macro, 4), np.nan_to_num(results[k].urgent_recall)))
 
 
 def predict_proba_labels(pipe: Pipeline, texts: Sequence[str]) -> tuple[np.ndarray, np.ndarray]:

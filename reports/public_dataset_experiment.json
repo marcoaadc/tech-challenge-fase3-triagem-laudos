@@ -1,0 +1,129 @@
+{
+  "dataset": {
+    "name": "Medical Abstracts TC Corpus",
+    "source": "https://github.com/sebischair/Medical-Abstracts-TC-Corpus",
+    "citation": "Schopf, T., Braun, D., Matthes, F. (2022). Evaluating Unsupervised Text Classification: Zero-shot and Similarity-based Approaches. NLPIR 2022.",
+    "language": "en",
+    "train_rows": 11550,
+    "test_rows": 2888,
+    "classes": [
+      "cardiovascular_diseases",
+      "digestive_system_diseases",
+      "general_pathological_conditions",
+      "neoplasms",
+      "nervous_system_diseases"
+    ],
+    "label_names": {
+      "1": "neoplasms",
+      "2": "digestive system diseases",
+      "3": "nervous system diseases",
+      "4": "cardiovascular diseases",
+      "5": "general pathological conditions"
+    }
+  },
+  "seed": 42,
+  "majority_baseline": {
+    "label": "general_pathological_conditions",
+    "accuracy": 0.3327562326869806
+  },
+  "candidates": [
+    "logreg",
+    "complement_nb"
+  ],
+  "results": {
+    "logreg": {
+      "accuracy": 0.5117728531855956,
+      "f1_macro": 0.5104120443308003,
+      "f1_weighted": 0.5088566422142248,
+      "per_class": {
+        "cardiovascular_diseases": {
+          "precision": 0.5824175824175825,
+          "recall": 0.6081967213114754,
+          "f1": 0.595028067361668,
+          "support": 610
+        },
+        "digestive_system_diseases": {
+          "precision": 0.40233236151603496,
+          "recall": 0.46153846153846156,
+          "f1": 0.42990654205607476,
+          "support": 299
+        },
+        "general_pathological_conditions": {
+          "precision": 0.425,
+          "recall": 0.37148803329864727,
+          "f1": 0.39644641865630204,
+          "support": 961
+        },
+        "neoplasms": {
+          "precision": 0.6356821589205397,
+          "recall": 0.669826224328594,
+          "f1": 0.6523076923076923,
+          "support": 633
+        },
+        "nervous_system_diseases": {
+          "precision": 0.4688279301745636,
+          "recall": 0.4883116883116883,
+          "f1": 0.47837150127226463,
+          "support": 385
+        }
+      },
+      "fit_seconds": 31.698699099999885,
+      "vocabulary_size": 233677
+    },
+    "complement_nb": {
+      "accuracy": 0.5418975069252078,
+      "f1_macro": 0.5181720391704072,
+      "f1_weighted": 0.5248558745252668,
+      "per_class": {
+        "cardiovascular_diseases": {
+          "precision": 0.5845959595959596,
+          "recall": 0.759016393442623,
+          "f1": 0.6604850213980028,
+          "support": 610
+        },
+        "digestive_system_diseases": {
+          "precision": 0.41132075471698115,
+          "recall": 0.36454849498327757,
+          "f1": 0.38652482269503546,
+          "support": 299
+        },
+        "general_pathological_conditions": {
+          "precision": 0.46005509641873277,
+          "recall": 0.34755463059313213,
+          "f1": 0.3959691760521636,
+          "support": 961
+        },
+        "neoplasms": {
+          "precision": 0.6287128712871287,
+          "recall": 0.8025276461295419,
+          "f1": 0.7050659264399722,
+          "support": 633
+        },
+        "nervous_system_diseases": {
+          "precision": 0.5084175084175084,
+          "recall": 0.3922077922077922,
+          "f1": 0.44281524926686217,
+          "support": 385
+        }
+      },
+      "fit_seconds": 6.4516247999999905,
+      "vocabulary_size": 233677
+    }
+  },
+  "best_model": "complement_nb",
+  "onnx_parity": {
+    "n_samples": 1000,
+    "label_agreement": 0.998,
+    "max_abs_prob_diff": 0.011002142267258264,
+    "mean_abs_prob_diff": 0.0008711197318267743
+  },
+  "calibration": {
+    "n_samples": 2888,
+    "brier_score": 0.6331639717677413,
+    "ece": 0.12043063951668036,
+    "mce": 0.23589740806238102,
+    "mean_confidence": 0.5517797898245218,
+    "accuracy": 0.5418975069252078
+  },
+  "onnx_bytes": 12382475
+}

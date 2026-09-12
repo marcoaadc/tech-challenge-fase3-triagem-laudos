@@ -39,3 +39,6 @@ airflow/webserver_config.py
 Thumbs.db
 .vscode/
 .idea/
+
+# Cache de datasets externos (experimento de generalizacao)
+data/external/

@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies]
+    commit-message:
+      prefix: "build"
+    groups:
+      runtime:
+        patterns: ["fastapi", "uvicorn", "pydantic*", "prometheus-client", "onnxruntime", "numpy", "scikit-learn", "joblib"]
+      training:
+        patterns: ["pandas", "skl2onnx", "onnx", "mlflow", "pyyaml"]
+      dev:
+        patterns: ["pytest*", "ruff", "httpx", "pre-commit"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "build"
+
+  - package-ecosystem: docker
+    directory: /airflow
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "build"
